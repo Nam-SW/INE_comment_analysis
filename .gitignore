@@ -117,3 +117,4 @@ dmypy.json
 # USER DEFINE
 config.json
 resource/tokenizer.pkl
+resource/*.xlsx

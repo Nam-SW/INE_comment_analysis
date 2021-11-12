@@ -91,7 +91,7 @@ def main(cfg):
     print(df.shape)
     print(df.head())
     
-    df.to_excel(cfg['output_dir'] + "/ine_coment.xlsx", index=None)
+    df.to_excel("resource/ine_coment.xlsx", index=None)
 
 
 if __name__ == "__main__":
