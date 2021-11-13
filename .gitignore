@@ -118,3 +118,5 @@ dmypy.json
 config.json
 resource/tokenizer.pkl
 resource/*.xlsx
+logs/
+model/
