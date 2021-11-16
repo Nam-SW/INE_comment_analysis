@@ -1,1 +1,1 @@
-{"embeddings": [{"tensorName": "Ine word2vec", "tensorShape": [7200, 64], "tensorPath": "https://raw.githubusercontent.com/Nam-SW/INE_comment_analysis/main/resource/vectors.tsv", "metadataPath": "https://raw.githubusercontent.com/Nam-SW/INE_comment_analysis/main/resource/metadata.tsv"}]}
+{"embeddings": [{"tensorName": "Ine word2vec", "tensorShape": [38543, 64], "tensorPath": "https://raw.githubusercontent.com/Nam-SW/INE_comment_analysis/main/resource/vectors.tsv", "metadataPath": "https://raw.githubusercontent.com/Nam-SW/INE_comment_analysis/main/resource/metadata.tsv"}]}
