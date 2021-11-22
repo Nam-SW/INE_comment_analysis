@@ -23,7 +23,9 @@ def get_param(url):
     return params
 
 
-def get_video_ids(playlist_url):
+def get_video_ids(playlist_urls):
+    result = []
+    
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
@@ -31,14 +33,28 @@ def get_video_ids(playlist_url):
     chrome_options.add_argument("--disable-dev-shm-usage")
     
     driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
-    driver.get('https://www.youtube.com/playlist?list=UUroM00J2ahCN6k-0-oAiDxg')
-
-    elements = driver.find_elements_by_css_selector("#video-title")
-    urls = [get_param(element.get_attribute('href'))['v'] for element in elements]
+    
+    for playlist_url in tqdm(playlist_urls):
+        driver.get(playlist_url)
+        
+        latest_cnt = 0
+        elements = []
+        
+        while True:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(3)
+            elements = driver.find_elements_by_css_selector("#video-title")
+            
+            if len(elements) == latest_cnt:
+                break
+            
+            latest_cnt = len(elements)
+        
+        result += [get_param(element.get_attribute('href'))['v'] for element in elements]
 
     driver.close()
     
-    return urls
+    return result
 
 
 def scrap_comments(video_ids, token):
@@ -52,8 +68,12 @@ def scrap_comments(video_ids, token):
         video = api_obj.videos().list(part='snippet', id=video_id).execute()
         title = video['items'][0]['snippet']['title']
         desc = video['items'][0]['snippet']['description']
+        channel_title = video['items'][0]['snippet']['channelTitle']
 
-        response = api_obj.commentThreads().list(part='snippet,replies', videoId=video_id, maxResults=100).execute()
+        try:
+            response = api_obj.commentThreads().list(part='snippet,replies', videoId=video_id, maxResults=100).execute()
+        except Exception as e:
+            print(e)
 
         while response:
             for item in response['items']:
@@ -71,7 +91,7 @@ def scrap_comments(video_ids, token):
                 break
 
         result = [
-            [title, desc] + [BeautifulSoup(col, 'html.parser').text for col in row]
+            [title, desc, channel_title] + [BeautifulSoup(col, 'html.parser').text for col in row]
             for row in result
         ]
         comments.append(result)
@@ -80,12 +100,12 @@ def scrap_comments(video_ids, token):
 
 
 def main(cfg):
-    video_ids = get_video_ids(cfg['playlist_url'])
+    video_ids = get_video_ids(cfg['playlist_urls'])
     comments = scrap_comments(video_ids, cfg['youtube_token'])
     
-    df = pd.DataFrame(comments, columns=['title', 'desc', 'name', 'time', 'comment'])
+    df = pd.DataFrame(comments, columns=['title', 'desc', 'channel', 'name', 'time', 'original_comment'])
     df['desc'] = df['desc'].apply(lambda x: x.replace("\n", " ").strip())
-    df['comment'] = df['comment'].apply(lambda x: x.replace("\n", " ").strip())
+    df['original_comment'] = df['original_comment'].apply(lambda x: x.replace("\n", " ").strip())
     df['time'] = df['time'].apply(lambda x: x.replace("T", " ").replace("Z", ""))
     
     print(df.shape)
